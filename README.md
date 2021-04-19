@@ -4,21 +4,29 @@ cloudconvert-php
 > This is the official PHP SDK v3 for the [CloudConvert](https://cloudconvert.com/api/v2) _API v2_. 
 > For API v1, please use [v2 branch](https://github.com/cloudconvert/cloudconvert-php/tree/v2) of this repository.
 
-[![Build Status](https://travis-ci.org/cloudconvert/cloudconvert-php.svg?branch=master)](https://travis-ci.org/cloudconvert/cloudconvert-php)
+[![Tests](https://github.com/cloudconvert/cloudconvert-php/actions/workflows/run-tests.yml/badge.svg)](https://github.com/cloudconvert/cloudconvert-php/actions/workflows/run-tests.yml)
 [![Latest Stable Version](https://poser.pugx.org/cloudconvert/cloudconvert-php/v/stable)](https://packagist.org/packages/cloudconvert/cloudconvert-php)
 [![Total Downloads](https://poser.pugx.org/cloudconvert/cloudconvert-php/downloads)](https://packagist.org/packages/cloudconvert/cloudconvert-php)
-[![License](https://poser.pugx.org/cloudconvert/cloudconvert-php/license)](https://packagist.org/packages/cloudconvert/cloudconvert-php)
 
 
 Install
 -------------------
 
 To install the PHP SDK you will need to be using [Composer]([https://getcomposer.org/)
-in your project. To install it please see the [docs](https://getcomposer.org/download/).
+in your project. 
  
+Install the SDK alongside Guzzle 7:
 
 ```bash
-composer require cloudconvert/cloudconvert-php
+composer require cloudconvert/cloudconvert-php php-http/guzzle7-adapter
+```
+
+This package is not tied to any specific HTTP client. Instead, it uses [Httplug](https://github.com/php-http/httplug) to let users choose whichever HTTP client they want to use.
+
+If you want to use Guzzle 6 instead, use:
+
+```bash
+composer require cloudconvert/cloudconvert-php php-http/guzzle6-adapter
 ```
 
 
@@ -74,7 +82,7 @@ $job = (new Job())
     ->addTask(new Task('import/upload','upload-my-file'))
     ->addTask(
         (new Task('convert', 'convert-my-file'))
-            ->set('input', 'import-my-file')
+            ->set('input', 'upload-my-file')
             ->set('output_format', 'pdf')
     )
     ->addTask(
@@ -84,9 +92,9 @@ $job = (new Job())
 
 $cloudconvert->jobs()->create($job);
 
-$uploadTask = $job->getTasks()->name('upload-my-file')[0];
+$uploadTask = $job->getTasks()->whereName('upload-my-file')[0];
 
-$cloudconvert->tasks()->upload($uploadTask, fopen('./file.pdf', 'r'));
+$cloudconvert->tasks()->upload($uploadTask, fopen('./file.pdf', 'r'), 'file.pdf');
 ```
 The `upload()` method accepts a string, PHP resource or PSR-7 `StreamInterface` as second parameter.
 
@@ -160,8 +168,8 @@ $job = $webhookEvent->getJob();
 $job->getTag(); // can be used to store an ID
 
 $exportTask = $job->getTasks()
-            ->status(Task::STATUS_FINISHED) // get the task with 'finished' status ...
-            ->name('export-it')[0]);        // ... and with the name 'export-it'
+            ->whereStatus(Task::STATUS_FINISHED) // get the task with 'finished' status ...
+            ->whereName('export-it')[0];        // ... and with the name 'export-it'
 // ...
 
 ```
